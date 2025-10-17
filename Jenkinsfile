@@ -7,12 +7,12 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/purushotham0912/spring-boot-docker-example.git'
+                git branch: 'main', url: 'https://github.com/purushotham0912/spring-boot-docker-example.git'
             }
         }
         stage('Build') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package -DskipTests -T 1C -Dmaven.compiler.fork=true'
             }
         }
         stage('Docker Build') {
@@ -24,15 +24,15 @@ pipeline {
             steps {
                 sh """
                 if [ \$(docker ps -q -f name=${APP_NAME}) ]; then
-                    docker stop ${APP_NAME}
-                    docker rm ${APP_NAME}
+                    docker stop ${APP_NAME} || true
+                    docker rm ${APP_NAME} || true
                 fi
                 """
             }
         }
         stage('Docker Run') {
             steps {
-                sh "docker run -d --name ${APP_NAME} -p ${APP_PORT}:${APP_PORT} ${APP_NAME}:latest"
+                sh "docker run -d --name ${APP_NAME} -p ${APP_PORT}:${APP_PORT} --restart unless-stopped ${APP_NAME}:latest"
             }
         }
     }
